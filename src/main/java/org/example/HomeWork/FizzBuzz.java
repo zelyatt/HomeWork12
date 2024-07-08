@@ -9,6 +9,7 @@ public class FizzBuzz {
     private int n;
     private AtomicInteger currentNumber = new AtomicInteger(1);
     private BlockingQueue<String> outputQueue = new LinkedBlockingQueue<>();
+    private final Object lock = new Object();
 
     public FizzBuzz(int n) {
         this.n = n;
@@ -16,44 +17,60 @@ public class FizzBuzz {
 
     public void fizz(Runnable printFizz) throws InterruptedException {
         while (true) {
-            int num = currentNumber.get();
-            if (num > n) break;
-            if (num % 3 == 0 && num % 5 != 0) {
-                printFizz.run();
-                currentNumber.incrementAndGet();
+            synchronized (lock) {
+                if (currentNumber.get() > n) break;
+                if (currentNumber.get() % 3 == 0 && currentNumber.get() % 5 != 0) {
+                    printFizz.run();
+                    currentNumber.incrementAndGet();
+                    lock.notifyAll();
+                } else {
+                    lock.wait();
+                }
             }
         }
     }
 
     public void buzz(Runnable printBuzz) throws InterruptedException {
         while (true) {
-            int num = currentNumber.get();
-            if (num > n) break;
-            if (num % 5 == 0 && num % 3 != 0) {
-                printBuzz.run();
-                currentNumber.incrementAndGet();
+            synchronized (lock) {
+                if (currentNumber.get() > n) break;
+                if (currentNumber.get() % 5 == 0 && currentNumber.get() % 3 != 0) {
+                    printBuzz.run();
+                    currentNumber.incrementAndGet();
+                    lock.notifyAll();
+                } else {
+                    lock.wait();
+                }
             }
         }
     }
 
     public void fizzbuzz(Runnable printFizzBuzz) throws InterruptedException {
         while (true) {
-            int num = currentNumber.get();
-            if (num > n) break;
-            if (num % 3 == 0 && num % 5 == 0) {
-                printFizzBuzz.run();
-                currentNumber.incrementAndGet();
+            synchronized (lock) {
+                if (currentNumber.get() > n) break;
+                if (currentNumber.get() % 3 == 0 && currentNumber.get() % 5 == 0) {
+                    printFizzBuzz.run();
+                    currentNumber.incrementAndGet();
+                    lock.notifyAll();
+                } else {
+                    lock.wait();
+                }
             }
         }
     }
 
     public void number(IntConsumer printNumber) throws InterruptedException {
         while (true) {
-            int num = currentNumber.get();
-            if (num > n) break;
-            if (num % 3 != 0 && num % 5 != 0) {
-                printNumber.accept(num);
-                currentNumber.incrementAndGet();
+            synchronized (lock) {
+                if (currentNumber.get() > n) break;
+                if (currentNumber.get() % 3 != 0 && currentNumber.get() % 5 != 0) {
+                    printNumber.accept(currentNumber.get());
+                    currentNumber.incrementAndGet();
+                    lock.notifyAll();
+                } else {
+                    lock.wait();
+                }
             }
         }
     }
