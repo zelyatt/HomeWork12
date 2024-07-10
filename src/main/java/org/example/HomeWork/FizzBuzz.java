@@ -1,130 +1,115 @@
 package org.example.HomeWork;
 
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicInteger;
-
 public class FizzBuzz {
-    private final int n;
-    private final AtomicInteger currentNumber = new AtomicInteger(1);
-    private final BlockingQueue<String> outputQueue = new LinkedBlockingQueue<>();
+    private int n;
+    private int current = 1;
     private final Object lock = new Object();
 
     public FizzBuzz(int n) {
         this.n = n;
     }
 
-    public void fizz() throws InterruptedException {
-        while (true) {
-            synchronized (lock) {
-                while (currentNumber.get() <= n && !(currentNumber.get() % 3 == 0 && currentNumber.get() % 5 != 0)) {
-                    lock.wait();
+    public void fizz() {
+        synchronized (lock) {
+            while (current <= n) {
+                while (current <= n && (current % 3 != 0 || current % 5 == 0)) {
+                    try {
+                        lock.wait();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
                 }
-                if (currentNumber.get() > n) break;
-                outputQueue.put("fizz");
-                currentNumber.incrementAndGet();
+                if (current > n) {
+                    break;
+                }
+                System.out.print("fizz, ");
+                current++;
                 lock.notifyAll();
             }
         }
     }
 
-    public void buzz() throws InterruptedException {
-        while (true) {
-            synchronized (lock) {
-                while (currentNumber.get() <= n && !(currentNumber.get() % 5 == 0 && currentNumber.get() % 3 != 0)) {
-                    lock.wait();
+    public void buzz() {
+        synchronized (lock) {
+            while (current <= n) {
+                while (current <= n && (current % 5 != 0 || current % 3 == 0)) {
+                    try {
+                        lock.wait();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
                 }
-                if (currentNumber.get() > n) break;
-                outputQueue.put("buzz");
-                currentNumber.incrementAndGet();
+                if (current > n) {
+                    break;
+                }
+                System.out.print("buzz, ");
+                current++;
                 lock.notifyAll();
             }
         }
     }
 
-    public void fizzbuzz() throws InterruptedException {
-        while (true) {
-            synchronized (lock) {
-                while (currentNumber.get() <= n && !(currentNumber.get() % 3 == 0 && currentNumber.get() % 5 == 0)) {
-                    lock.wait();
+    public void fizzbuzz() {
+        synchronized (lock) {
+            while (current <= n) {
+                while (current <= n && (current % 3 != 0 || current % 5 != 0)) {
+                    try {
+                        lock.wait();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
                 }
-                if (currentNumber.get() > n) break;
-                outputQueue.put("fizzbuzz");
-                currentNumber.incrementAndGet();
+                if (current > n) {
+                    break;
+                }
+                System.out.print("fizzbuzz, ");
+                current++;
                 lock.notifyAll();
             }
         }
     }
 
-    public void number() throws InterruptedException {
-        while (true) {
-            synchronized (lock) {
-                while (currentNumber.get() <= n && (currentNumber.get() % 3 == 0 || currentNumber.get() % 5 == 0)) {
-                    lock.wait();
+    public void number() {
+        synchronized (lock) {
+            while (current <= n) {
+                while (current <= n && (current % 3 == 0 || current % 5 == 0)) {
+                    try {
+                        lock.wait();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
                 }
-                if (currentNumber.get() > n) break;
-                outputQueue.put(String.valueOf(currentNumber.get()));
-                currentNumber.incrementAndGet();
+                if (current > n) {
+                    break;
+                }
+                System.out.print(current + ", ");
+                current++;
                 lock.notifyAll();
             }
-        }
-    }
-
-    public void printFromQueue() throws InterruptedException {
-        for (int i = 1; i <= n; i++) {
-            System.out.print(outputQueue.take() + (i < n ? ", " : ""));
         }
     }
 
     public static void main(String[] args) {
-        int n = 15;
+        int n = 150000;
         FizzBuzz fizzBuzz = new FizzBuzz(n);
 
-        Thread fizzThread = new Thread(() -> {
-            try {
-                fizzBuzz.fizz();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        });
+        Thread threadA = new Thread(fizzBuzz::fizz);
+        Thread threadB = new Thread(fizzBuzz::buzz);
+        Thread threadC = new Thread(fizzBuzz::fizzbuzz);
+        Thread threadD = new Thread(fizzBuzz::number);
 
-        Thread buzzThread = new Thread(() -> {
-            try {
-                fizzBuzz.buzz();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        });
-
-        Thread fizzBuzzThread = new Thread(() -> {
-            try {
-                fizzBuzz.fizzbuzz();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        });
-
-        Thread numberThread = new Thread(() -> {
-            try {
-                fizzBuzz.number();
-                fizzBuzz.printFromQueue();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        });
-
-        fizzThread.start();
-        buzzThread.start();
-        fizzBuzzThread.start();
-        numberThread.start();
+        threadA.start();
+        threadB.start();
+        threadC.start();
+        threadD.start();
 
         try {
-            fizzThread.join();
-            buzzThread.join();
-            fizzBuzzThread.join();
-            numberThread.join();
+            threadA.join();
+            threadB.join();
+            threadC.join();
+            threadD.join();
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            Thread.currentThread().interrupt();
         }
     }
 }
