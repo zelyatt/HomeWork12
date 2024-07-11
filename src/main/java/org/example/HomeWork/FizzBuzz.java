@@ -1,8 +1,12 @@
 package org.example.HomeWork;
 
+import java.util.Queue;
+import java.util.concurrent.LinkedBlockingDeque;
+
 public class FizzBuzz {
     private int n;
     private int current = 1;
+    private final Queue<String> queue = new LinkedBlockingDeque<>();
     private final Object lock = new Object();
 
     public FizzBuzz(int n) {
@@ -22,7 +26,7 @@ public class FizzBuzz {
                 if (current > n) {
                     break;
                 }
-                System.out.print("fizz, ");
+                queue.add("fizz");
                 current++;
                 lock.notifyAll();
             }
@@ -42,7 +46,7 @@ public class FizzBuzz {
                 if (current > n) {
                     break;
                 }
-                System.out.print("buzz, ");
+                queue.add("buzz");
                 current++;
                 lock.notifyAll();
             }
@@ -62,7 +66,7 @@ public class FizzBuzz {
                 if (current > n) {
                     break;
                 }
-                System.out.print("fizzbuzz, ");
+                queue.add("fizzbuzz");
                 current++;
                 lock.notifyAll();
             }
@@ -71,7 +75,7 @@ public class FizzBuzz {
 
     public void number() {
         synchronized (lock) {
-            while (current <= n) {
+            while (current <= n || !queue.isEmpty()) {
                 while (current <= n && (current % 3 == 0 || current % 5 == 0)) {
                     try {
                         lock.wait();
@@ -79,18 +83,23 @@ public class FizzBuzz {
                         Thread.currentThread().interrupt();
                     }
                 }
-                if (current > n) {
+                if (current > n && queue.isEmpty()) {
                     break;
                 }
-                System.out.print(current + ", ");
-                current++;
+                String item = queue.poll();
+                if (item == null) {
+                    System.out.print(current + ", ");
+                    current++;
+                } else {
+                    System.out.print(item + ", ");
+                }
                 lock.notifyAll();
             }
         }
     }
 
     public static void main(String[] args) {
-        int n = 150000;
+        int n = 15;
         FizzBuzz fizzBuzz = new FizzBuzz(n);
 
         Thread threadA = new Thread(fizzBuzz::fizz);
